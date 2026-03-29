@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Productos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #f4f6f8;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    form, .acciones, .lista {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      padding: 10px;
+      margin: 8px 0 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-ver { background: #2563eb; color: white; }
+    .btn-crear { background: #16a34a; color: white; }
+    .btn-actualizar { background: #f59e0b; color: white; }
+    .btn-eliminar { background: #dc2626; color: white; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #e5e7eb;
+    }
+
+    #mensaje {
+      font-weight: bold;
+      margin-top: 10px;
+      color: #111827;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gestión de Productos</h1>
+
+  <div class="acciones">
+    <button class="btn-ver" onclick="cargarProductos()">Actualizar productos</button>
+  </div>
+
+  <form id="formProducto">
+    <h2>Crear o actualizar producto</h2>
+
+    <input type="number" id="id" placeholder="ID (solo para actualizar o eliminar)">
+    <input type="text" id="nombre" placeholder="Nombre del producto" required>
+    <input type="number" id="precio" placeholder="Precio" required>
+    <input type="text" id="categoria" placeholder="Categoría" required>
+
+    <button type="button" class="btn-crear" onclick="crearProducto()">Crear</button>
+    <button type="button" class="btn-actualizar" onclick="actualizarProducto()">Actualizar</button>
+    <button type="button" class="btn-eliminar" onclick="eliminarProducto()">Eliminar</button>
+
+    <div id="mensaje"></div>
+  </form>
+
+  <div class="lista">
+    <h2>Lista de productos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Categoría</th>
+        </tr>
+      </thead>
+      <tbody id="tablaProductos"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:3000/productos";
+
+    async function cargarProductos() {
+      const respuesta = await fetch(API_URL);
+      const productos = await respuesta.json();
+
+      const tabla = document.getElementById("tablaProductos");
+      tabla.innerHTML = "";
+
+      productos.forEach(producto => {
+        tabla.innerHTML += `
+          <tr>
+            <td>${producto.id}</td>
+            <td>${producto.nombre}</td>
+            <td>${producto.precio}</td>
+            <td>${producto.categoria}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function crearProducto() {
+      const nombre = document.getElementById("nombre").value;
+      const precio = document.getElementById("precio").value;
+      const categoria = document.getElementById("categoria").value;
+
+      const respuesta = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ nombre, precio, categoria })
+      });
+
+      const data = await respuesta.json();
+      document.getElementById("mensaje").innerText = data.mensaje || data.error;
+      cargarProductos();
+      limpiarFormulario();
+    }
+
+    async function actualizarProducto() {
+      const id = document.getElementById("id").value;
+      const nombre = document.getElementById("nombre").value;
+      const precio = document.getElementById("precio").value;
+      const categoria = document.getElementById("categoria").value;
+
+      const respuesta = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ nombre, precio, categoria })
+      });
+
+      const data = await respuesta.json();
+      document.getElementById("mensaje").innerText = data.mensaje || data.error;
+      cargarProductos();
+      limpiarFormulario();
+    }
+
+    async function eliminarProducto() {
+      const id = document.getElementById("id").value;
+
+      const respuesta = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE"
+      });
+
+      const data = await respuesta.json();
+      document.getElementById("mensaje").innerText = data.mensaje || data.error;
+      cargarProductos();
+      limpiarFormulario();
+    }
+
+    function limpiarFormulario() {
+        document.getElementById("id").value = "";
+        document.getElementById("nombre").value = "";
+        document.getElementById("precio").value = "";
+        document.getElementById("categoria").value = "";
+    }
+
+    window.onload = cargarProductos;
+
+  </script>
+
+</body>
+</html>
